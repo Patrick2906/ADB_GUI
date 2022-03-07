@@ -1,10 +1,10 @@
-'''
+"""
     @Create time:   2022/3/7 14:21
     @Autohr:        Patrick.Yang
     @File:          reserved.py.py
     @Software:      PyCharm
     -*- coding: utf-8 -*-
-'''
+"""
 
 '''
     ***** send message sample *****

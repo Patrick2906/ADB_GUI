@@ -19,6 +19,7 @@ import subprocess
 from tkinter.messagebox import showinfo
 from tkinter import *
 import sys
+from DebugPage import *
 
 MAIN_PAGE_SIZE = (300, 180)
 
@@ -27,19 +28,24 @@ class HomePage(object):
     def __init__(self, master=None):
         self.page = None
         self.root = master
-        self.root.geometry('%dx%d' % (300, 180))  # MainPage size
+        # self.root.geometry('%dx%d' % (300, 180))  # MainPage size
         self.createPage()
 
     def createPage(self):
         self.page = Frame(self.root)  # create frame while initialize
-        self.page.pack()  # pack the components
-        Button(self.page, text='ADB Connect', width=12, command=self.AdbConnect).grid(row=1, stick=N, pady=10, column=1)
-        Button(self.page, text='Quit', width=12, command=self.page.quit).grid(row=2, stick=N, column=1)
+        self.page.grid(padx=100, pady=60, sticky=W + E + N + S)
+        # self.page.pack()  # pack the components
+
+        self.connectButton = Button(self.page, text='ADB Connect', width=12, command=self.AdbConnect)
+        self.connectButton.grid(stick=N, pady=10)
+
+        self.quitButton = Button(self.page, text='Quit', width=12, command=self.page.quit)
+        self.quitButton.grid(stick=N, pady=10)
 
     def AdbConnect(self):
         cmd_valid = False
         adb_cmd = "adb devices"
-        # adb_cmd = 'ipconfig'
+        adb_cmd = 'ipconfig'
         out = ''
 
         try:
@@ -53,7 +59,10 @@ class HomePage(object):
         if cmd_valid:
             if out != '':  # check in the list
                 print("list found")
-                print(out)
+                print(out.decode("gbk"))    # todo: utf-8? short term solution with Chinese windows system
+                self.page.pack_forget()
+                DebugPage(self.root)
+
             else:
                 self.emptyList()
 
