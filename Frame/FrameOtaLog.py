@@ -33,9 +33,9 @@ class Frame_OtaLog(Frame):
     def __init__(self, master=None):
         Frame.__init__(self, master)
         self.root = master
-        self.creatPage()
+        self.createPage()
 
-    def creatPage(self):
+    def createPage(self):
         # window1 #
         # dmclient log chat box label frame
         self.cheatbox_frame_dmclient = LabelFrame(self.root, text='dmclient.log', width=WIDTH_FRAME_WIN_1, labelanchor=N)
@@ -128,28 +128,27 @@ class Frame_OtaLog(Frame):
                                       command=self.stopGetting_TbxLog)
         self.tbx_stop_button.grid(row=ROW_STOP_BUTTON, column=COLUMN_INSERT_WIN_2, columnspan=8, sticky=W + E + N + S)
 
-    '''
-        send message sample
-        '''
 
-    # # input label showed below **row20**
-    # self.input_label_tbxUpdate = Label(self.cheatbox_frame_tbxUpdate, text='Enter message', padx=10, pady=5)
-    # self.input_label_tbxUpdate.grid(row=20, column=90, columnspan=8)
-    #
-    # # button for message test **row21**
-    # self.input_entry = Entry(self.cheatbox_frame_tbxUpdate, width=50, borderwidth=5)
-    # self.input_entry.grid(row=21, column=90, columnspan=8)
-    # self.input_entry.bind("<Return>", self.upadteMessage)
-    #
-    # # to send out the message **row22**
-    # self.send_button = Button(self.cheatbox_frame_tbxUpdate, text="Send Text ", padx=10, pady=5,
-    #                           command=self.sendMessage)
-    # self.send_button.grid(row=22, column=90, columnspan=6, sticky=W + E + N + S)
-    #
-    # # clear **row23**
-    # self.clear_button = Button(self.cheatbox_frame_tbxUpdate, text="Clear Text ", padx=10, pady=5,
-    #                            command=self.clearMessage)
-    # self.clear_button.grid(row=23, column=90, columnspan=6, sticky=W + E + N + S)
+    def pageDestroy(self):
+        self.cheatbox_frame_dmclient.grid_remove()
+        self.messages_frame_dmclient.grid_remove()
+        self.xscrollbar_dmclient.grid_remove()
+        self.yscrollbar_dmclient.grid_remove()
+        self.message_list_dmclient.grid_remove()
+        self.cmd_frame_dmclient.grid_remove()
+        self.cmd_label_dmclient.grid_remove()
+        self.dmclient_start_button.grid_remove()
+        self.dmclient_stop_button.grid_remove()
+        self.cheatbox_frame_tbxUpdate.grid_remove()
+        self.messages_frame_tbxUpdate.grid_remove()
+        self.xscrollbar_tbxUpdate.grid_remove()
+        self.yscrollbar_tbxUpdate.grid_remove()
+        self.message_list_tbxUpdate.grid_remove()
+        self.cmd_frame_tbxUpdate.grid_remove()
+        self.cmd_label_tbxUpdate.grid_remove()
+        self.tbx_start_button.grid_remove()
+        self.tbx_stop_button.grid_remove()
+
 
     def startGetting_TbxLog(self):
         new_msg = ''
@@ -165,7 +164,7 @@ class Frame_OtaLog(Frame):
         new_msg = ''
         print("")
 
-    def upadteMessage(self):
+    def updateMessage(self):
         new_msg = ''
         new_msg = self.input_entry.get()
         self.input_entry.delete(0, END)  # clear inupt message
@@ -188,9 +187,3 @@ class Frame_OtaLog(Frame):
         self.message_list_tbxUpdate.delete(0, END)
 
 
-root = Tk()
-root.title("OTA log Frame")
-
-Frame_OtaLog(root)
-
-root.mainloop()

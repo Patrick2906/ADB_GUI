@@ -25,19 +25,24 @@ COMMAND_TABLE = {
 }
 
 
+def get_key2int(dct, value) -> int:
+    return int([k for (k, v) in dct.items() if v == value][0], 10)
+
+
 class Frame_SpecialCmd(Frame):
     def __init__(self, master=None):
         Frame.__init__(self, master)
         self.root = master
-        self.creatPage()
+        self.createPage()
+
         self.infoIndex = 0
 
-    def creatPage(self):
-        #
+    def createPage(self):
+        # command and result cheatbox
         self.cheatbox_frame_info = LabelFrame(self.root, text='L555', width=60, labelanchor=N)
         self.cheatbox_frame_info.grid(row=0, column=0, rowspan=15, columnspan=8)
 
-        # dmclient logging window grouping with other widgets
+        # command logging window grouping with other widgets
         self.messages_frame_info = Frame(self.cheatbox_frame_info, bd=3, relief=SUNKEN, padx=5)
         self.messages_frame_info.grid(row=1, column=0, rowspan=15, sticky=W + E + N + S)
 
@@ -69,28 +74,13 @@ class Frame_SpecialCmd(Frame):
                                  command=self.getBox)
         self.get_button.grid(row=22, column=5, columnspan=2, sticky=W + E + N + S)
 
-    '''
-    send message sample
-    '''
 
-    # # input label showed below **row20**
-    # self.input_label_tbxUpdate = Label(self.cheatbox_frame_tbxUpdate, text='Enter message', padx=10, pady=5)
-    # self.input_label_tbxUpdate.grid(row=20, column=90, columnspan=8)
-    #
-    # # button for message test **row21**
-    # self.input_entry = Entry(self.cheatbox_frame_tbxUpdate, width=50, borderwidth=5)
-    # self.input_entry.grid(row=21, column=90, columnspan=8)
-    # self.input_entry.bind("<Return>", self.upadteMessage)
-    #
-    # # to send out the message **row22**
-    # self.send_button = Button(self.cheatbox_frame_tbxUpdate, text="Send Text ", padx=10, pady=5,
-    #                           command=self.sendMessage)
-    # self.send_button.grid(row=22, column=90, columnspan=6, sticky=W + E + N + S)
-    #
-    # # clear **row23**
-    # self.clear_button = Button(self.cheatbox_frame_tbxUpdate, text="Clear Text ", padx=10, pady=5,
-    #                            command=self.clearMessage)
-    # self.clear_button.grid(row=23, column=90, columnspan=6, sticky=W + E + N + S)
+    def pageDestroy(self):
+        self.cheatbox_frame_info.grid_remove()
+        self.message_list_info.grid_remove()
+        self.command_box.grid_remove()
+        self.get_button.grid_remove()
+
 
     def startGetting_TbxLog(self):
         new_msg = ''
@@ -106,36 +96,20 @@ class Frame_SpecialCmd(Frame):
         new_msg = ''
         print("")
 
-    def get_key2int(self, dct, value) -> int:
-        return int([k for (k, v) in dct.items() if v == value][0], 10)
-
     def updateMessage(self, message):
         # new_msg = ''
         # new_msg = self.input_entry.get()
         # self.input_entry.delete(0, END)  # clear inupt message
-
-        self.message_list_info.insert(END, message)
+        newlines = message.splitlines(keepends=TRUE)
+        for line in newlines:
+            self.message_list_info.insert(END, line)
         self.message_list_info.see(END)  # show last line when text overflow
-
-    def sendMessage(self):
-        newMsg = ''
-        print("sent")
-        self.count = self.count + 1
-
-        newMsg = self.input_entry.get()
-        self.input_entry.delete(0, END)  # clear input message
-
-        self.message_list_tbxUpdate.insert(END, newMsg + str(self.count))
-        self.message_list_tbxUpdate.see(END)  # show last line when text overflow
-
-    def clearMessage(self):
-        self.message_list_tbxUpdate.delete(0, END)
 
     def getBox(self):
         cmd_str = self.command_box.get()
-        '''# other way to get'''
+        # other way to get
         # print(self.strVar.get())
-        cmd_number = self.get_key2int(COMMAND_TABLE, cmd_str)
+        cmd_number = get_key2int(COMMAND_TABLE, cmd_str)
         self.executeCommand(cmd_number)
 
     def executeCommand(self, command):
@@ -153,32 +127,24 @@ class ShellCommands(object):
         print("executing command1")
         ret_message = ''
         cmd = "adb get state"
+        ret_message = subprocess.getoutput(cmd)
 
-        try:
-            r0 = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            ret_message = r0.communicate()[0]  # [0] output message, [1] error message
-        except OSError as err:
-            print(err, file=sys.stderr)
-            ret_message = err
         return 0, ret_message
 
     def commands_2(self):
         print("executing command2")
         ret_message = ''
         cmd = "ipconfig"
-        try:
-            r0 = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            ret_message = r0.communicate()[0]  # [0] output message, [1] error message
-        except OSError as err:
-            print(err, file=sys.stderr)
-            ret_message = err
+
+        ret_message = subprocess.getoutput(cmd)
         return 0, ret_message
 
     def commands_3(self):
-        ret_message = ''
         print("executing command3")
+        ret_message = ''
+        cmd = "ping www.baidu.com"
 
-
+        ret_message = subprocess.getoutput(cmd)
 
         return 0, ret_message
 
@@ -188,9 +154,3 @@ class ShellCommands(object):
         return method()
 
 
-root = Tk()
-root.title("SpecialCmd")
-
-Frame_SpecialCmd(root)
-
-root.mainloop()

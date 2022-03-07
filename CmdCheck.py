@@ -11,6 +11,7 @@ from apscheduler.schedulers.background import BlockingScheduler
 from datetime import datetime
 from time import sleep
 
+'''1'''
 # adb_path = os.getcwd() + "/ADB_WIN_LIB"
 # if os.path.isdir(adb_path):
 #     print("path exist")
@@ -54,47 +55,64 @@ from time import sleep
 #     except KeyboardInterrupt:
 #         pass
 
-
-from threading import Thread
-import subprocess
-from queue import Queue
-
-num_threads = 3
-ips = ['127.0.0.1', '172.30.188.130']
-q = Queue()
-
-
-def pingme(i, queue):
-    while True:
-        ip = queue.get()
-        print('Thread %s pinging %s' % (i, ip))
-
-        ret = subprocess.Popen('ping %s' % ip, shell=False,stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        out = ret.communicate()[0]
-
-        print(out)
-        # if ret == 0:
-        #     print('%s is alive!' % ip)
-        # elif ret == 1:
-        #     print('%s is down...' % ip)
-        queue.task_done()
-
-    # start num_threads threads
-
-print("start.............")
-for i in range(num_threads):
-    t = Thread(target=pingme, args=(i, q))
-    t.setDaemon(True)
-    t.start()
-
-for ip in ips:
-    q.put(ip)
-print('main thread waiting...')
-
-q.join();
-print('Done')
-
-
+'''2'''
+# from threading import Thread
+# import subprocess
+# from queue import Queue
+#
+# num_threads = 3
+# ips = ['127.0.0.1', '172.30.188.130']
+# q = Queue()
+#
+#
+# def pingme(i, queue):
+#     while True:
+#         ip = queue.get()
+#         print('Thread %s pinging %s' % (i, ip))
+#
+#         ret = subprocess.Popen('ping %s' % ip, shell=False,stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+#         out = ret.communicate()[0]
+#
+#         print(out)
+#         # if ret == 0:
+#         #     print('%s is alive!' % ip)
+#         # elif ret == 1:
+#         #     print('%s is down...' % ip)
+#         queue.task_done()
+#
+#     # start num_threads threads
+#
+# print("start.............")
+# for i in range(num_threads):
+#     t = Thread(target=pingme, args=(i, q))
+#     t.setDaemon(True)
+#     t.start()
+#
+# for ip in ips:
+#     q.put(ip)
+# print('main thread waiting...')
+#
+# q.join();
+# print('Done')
 
 
+'''3'''
+import functools
 
+
+def use_logging(func):
+    @functools.wraps(func)
+    def _deco(*args, **kwargs):
+        print("%s is running" % func.__name__)
+        func(*args, **kwargs)
+
+    return _deco
+
+
+@use_logging
+def bar():
+    print('i am bar')
+    print(bar.__name__)
+
+
+bar()
