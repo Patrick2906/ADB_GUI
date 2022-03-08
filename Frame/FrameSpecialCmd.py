@@ -39,7 +39,7 @@ class Frame_SpecialCmd(Frame):
 
     def createPage(self):
         # command and result cheatbox
-        self.cheatbox_frame_info = LabelFrame(self.root, text='L555', width=60, labelanchor=N)
+        self.cheatbox_frame_info = LabelFrame(self.root, text='command logging', width=60, labelanchor=N)
         self.cheatbox_frame_info.grid(row=0, column=0, rowspan=15, columnspan=8)
 
         # command logging window grouping with other widgets
@@ -121,7 +121,8 @@ class Frame_SpecialCmd(Frame):
         if status == 0:
             self.updateMessage(message)
 
-
+# shell commands definition
+# add new command(s) with follow name "commands_x"
 class ShellCommands(object):
     def commands_1(self):
         print("executing command1")
@@ -150,7 +151,7 @@ class ShellCommands(object):
 
     def getCommand(self, no):
         name_of_method = "commands_" + str(no)
-        method = getattr(self, name_of_method, lambda: -1)
+        method = getattr(self, name_of_method, lambda: -1)  # return -1 for invalid command
         return method()
 
 
