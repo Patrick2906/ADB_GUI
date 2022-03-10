@@ -50,21 +50,28 @@ class DebugPage(object):
     def __init__(self, master=None):
         self.root = master
         self.status = 0
+        self.menubar = None
         self.p0 = None  # process for connection check
         print("status: {}".format(self.status))
         # self.root.geometry('%dx%d' % (800, 600))
+
+        # to create page default
         self.createPage()
+
+        # start scheduler
         self.scheduler = BackgroundScheduler()
         self.jobTestPresent = self.scheduler.add_job(self.tick, trigger='interval', seconds=1)
         self.scheduler.start()
-        print("scheduler start")
         self.cnt = 0
 
     def createPage(self):
+        """ insert the pages in requirement """
         self.otaLogPage = Frame_OtaLog(self.root)
         self.specialCmdPage = Frame_SpecialCmd(self.root)
 
         self.specCmdPageActive()  # default page
+
+        # add menubar
         self.menubar = Menu(self.root)
         self.menubar.add_command(label="special_command", command=self.specCmdPageActive)
         self.menubar.add_command(label="ota_log", command=self.otaLogPageActive)
@@ -84,9 +91,11 @@ class DebugPage(object):
     def pageActive(func):
         @functools.wraps(func)
         def deco(self, *args, **kwargs):
+            # destroy pages as created
             self.specialCmdPage.pageDestroy()
             self.otaLogPage.pageDestroy()
             func(self, *args, **kwargs)
+
         return deco
 
     @pageActive
@@ -100,20 +109,16 @@ class DebugPage(object):
     @pageActive
     def adbDisconnected(self):
         self.cnt = 0
-        self.scheduler.remove_all_jobs()
-        self.menubar.destroy()
-        # self.scheduler.shutdown()
+        self.scheduler.remove_all_jobs()    # remove current, prevent jump to next cycle
+        self.menubar.destroy()  # destroy menu bar
         print("scheduler stop")
         abc = showinfo('Message', 'device disconnected ')
         self.status = PAGE_STATUS_SWITCHPAGE
         self.root.quit()
         print("quit root")
 
-
     def pagePack(self, frameId):
         self.last_frame_id = frameId
-
-
 
 # root = Tk()
 # root.title('adb test')
