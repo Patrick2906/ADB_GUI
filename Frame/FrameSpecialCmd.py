@@ -6,6 +6,7 @@
     -*- coding: utf-8 -*-
 '''
 import subprocess
+import time
 import tkinter.ttk
 from tkinter.messagebox import showinfo
 from tkinter import *
@@ -32,6 +33,8 @@ def get_key2int(dct, value) -> int:
 class Frame_SpecialCmd(Frame):
     def __init__(self, master=None):
         Frame.__init__(self, master)
+        self.last_status = None
+        self.lock = False
         self.root = master
         self.createPage()
 
@@ -65,7 +68,7 @@ class Frame_SpecialCmd(Frame):
         self.strVar = StringVar()
         self.command_box = Combobox(self.root, textvariable=self.strVar)
         command_list = list(COMMAND_TABLE.values())
-        self.command_box["values"] = command_list   # fill the command in combobox
+        self.command_box["values"] = command_list  # fill the command in combobox
         self.command_box.current(0)
         # self.command_box.bind("<<ComboboxSelected>>", self.getBox)
         self.command_box.grid(row=22, column=0, columnspan=5, sticky=W + E + N + S)
@@ -74,13 +77,13 @@ class Frame_SpecialCmd(Frame):
                                  command=self.getBox)
         self.get_button.grid(row=22, column=5, columnspan=2, sticky=W + E + N + S)
 
-
     def pageDestroy(self):
+        while self.lock:
+            time.sleep(1)
         self.cheatbox_frame_info.grid_remove()
         self.message_list_info.grid_remove()
         self.command_box.grid_remove()
         self.get_button.grid_remove()
-
 
     def startGetting_TbxLog(self):
         new_msg = ''
@@ -113,6 +116,8 @@ class Frame_SpecialCmd(Frame):
         self.executeCommand(cmd_number)
 
     def executeCommand(self, command):
+        self.lock = True
+        print("lock:{}".format(self.lock))
         cmd = ShellCommands()
         status, message = cmd.getCommand(command)
         self.last_status = status
@@ -120,6 +125,8 @@ class Frame_SpecialCmd(Frame):
         print("status {}".format(status))
         if status == 0:
             self.updateMessage(message)
+        self.lock = False
+
 
 # shell commands definition
 # add new command(s) with follow name "commands_x"
@@ -153,5 +160,3 @@ class ShellCommands(object):
         name_of_method = "commands_" + str(no)
         method = getattr(self, name_of_method, lambda: -1)  # return -1 for invalid command
         return method()
-
-
