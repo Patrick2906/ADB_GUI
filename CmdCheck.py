@@ -7,11 +7,13 @@
 '''
 import os
 import subprocess
+import time
+
 from apscheduler.schedulers.background import BlockingScheduler
 from datetime import datetime
 from time import sleep
 
-'''1'''
+'''1  blocking scheduler check'''
 # adb_path = os.getcwd() + "/ADB_WIN_LIB"
 # if os.path.isdir(adb_path):
 #     print("path exist")
@@ -55,7 +57,7 @@ from time import sleep
 #     except KeyboardInterrupt:
 #         pass
 
-'''2'''
+'''2 thread with subprocess module'''
 # from threading import Thread
 # import subprocess
 # from queue import Queue
@@ -95,24 +97,113 @@ from time import sleep
 # q.join();
 # print('Done')
 
+'''3 decorate function play'''
+# import functools
+#
+#
+# def use_logging(func):
+#     @functools.wraps(func)
+#     def _deco(*args, **kwargs):
+#         print("%s is running" % func.__name__)
+#         func(*args, **kwargs)
+#
+#     return _deco
+#
+#
+# @use_logging
+# def bar():
+#     print('i am bar')
+#     print(bar.__name__)
+#
+#
+# bar()
 
-'''3'''
-import functools
+'''4 subprocess non blocking'''
+# import subprocess
+# import time
+#
+# p = subprocess.Popen(['ping', 'www.baidu.com'],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+# n=None
+#
+# while n is None:
+#     # print('Still pinging')
+#     n = p.poll()
+#     message = p.stdout.readline().decode("gbk")
+#     print(message)
+#     time.sleep(1)
+#
+# print('Not sleeping any longer.  Exited with returncode %d' % p.returncode)
+
+'''5 non-blocking asyncscheduler '''
+"""
+Demonstrates how to use the asyncio compatible scheduler to schedule a job that executes on 3
+second intervals.
+"""
+
+# import asyncio
+# import os
+# from datetime import datetime
+#
+# from apscheduler.schedulers.background import BackgroundScheduler
+#
+#
+# def tick():
+#     print('Tick! The time is: %s' % datetime.now())
+#     global _abc
+#     _abc += 1
+#     print(_abc)
+#
+#
+# if __name__ == '__main__':
+#     global _abc
+#     _abc = 0
+#     scheduler = BackgroundScheduler()
+#     scheduler.add_job(tick, 'interval', seconds=1)
+#     scheduler.start()
+#     print('Press Ctrl+{0} to exit'.format('Break' if os.name == 'nt' else 'C'))
+#
+#     try:
+#         # This is here to simulate application activity (which keeps the main thread alive).
+#         while True:
+#             time.sleep(2)
+#             if _abc > 5:
+#                 break
+#     except (KeyboardInterrupt, SystemExit):
+#         # Not strictly necessary if daemonic mode is enabled but should be done if possible
+#         scheduler.shutdown()
+#     print("shutdown")
+from tkinter import *
+import threading
 
 
-def use_logging(func):
-    @functools.wraps(func)
-    def _deco(*args, **kwargs):
-        print("%s is running" % func.__name__)
-        func(*args, **kwargs)
+def func3(parameter):
+  threading.Thread(target=lambda: Plottingandselect(parameter)).start()
+  #using threading to call  the
+  #another window due to which above error is coming after opening and
+  #closing it 2-3 times
 
-    return _deco
+def Plottingandselect(rollno):
+      window=Toplevel()
+      window.title("Marks Distribution")
+      Label(window, text=rollno).grid(row=1,column=2)
 
+      Label(window,text="X axis").grid(row=2,column=1)
+      Label(window, text="Marks",relief=SUNKEN).grid(row=3, column=1)
+      Label(window,text="Y axis").grid(row=2,column=3,padx=22)
+      OPTIONS1 = [
+        "Physics",
+        "Maths",
+        "Chemistry",
+        "Biology",
+      ]
+      list1 = Listbox(window, selectmode="multiple", relief=SUNKEN, font=("Times New Roman", 10))
+  #then user will select above parameters and graphs will be plotted and
+  #it is plotting also perfectly multiple times also , but when i am closing
+ # this plotting window and again I select another roll number and do the
+ #same 2-3 times it gives the following error
+ # mt_debug I am using because I thought that mttkinter will handle it
 
-@use_logging
-def bar():
-    print('i am bar')
-    print(bar.__name__)
-
-
-bar()
+root = Tk()
+root.geometry('454x567')
+B = Button(root, text='Plot window', command=lambda: func3(1)).grid(row=1, column=2, padx=10, pady=10)
+root.mainloop()
