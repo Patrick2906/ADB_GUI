@@ -14,38 +14,43 @@ from datetime import datetime
 from time import sleep
 
 '''1  abd shell cmd + blocking scheduler check'''
-# adb_path = os.getcwd() + "/ADB_WIN_LIB"
-# if os.path.isdir(adb_path):
-#     print("path exist")
-#     os.environ["PATH"] += os.pathsep + adb_path
-#     # os.chdir("D:/tools/telit-tools")
-#     cmd = "adb devices"
-#     print(cmd)
-#     r0 = subprocess.Popen(cmd, shell=True,
-#                           stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-#     output, error = r0.communicate()
-#     print(output.decode("utf-8"))
-#
-#     cmd = "adb shell"
-#     r0 = subprocess.Popen(cmd, shell=True,
-#                           stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-#     cmd = "ls"
-#     cmds = [
-#         "ls",
-#         "ls -l",
-#         "cd /mnt",
-#         "ls"
-#         "exit",
-#     ]
-#     cmdTest = "\n".join(cmds) + "\n"
-#     output = r0.communicate(cmdTest.encode("utf-8"))
-#
-#     print ("output:")
-#     temp = output.decode("utf-8")
-#     print("error:")
-#     print(error.decode("gbk"))
-#     for item in out:
-#        print(out.decode("gbk").replace("\n\n", "")
+adb_path = os.getcwd() + "/ADB_WIN_LIB"
+if os.path.isdir(adb_path):
+    print("path exist")
+    os.environ["PATH"] += os.pathsep + adb_path
+    # os.chdir("D:/tools/telit-tools")
+    cmd = "adb devices"
+    print(cmd)
+    r0 = subprocess.Popen(cmd, shell=True,
+                          stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    output, error = r0.communicate()
+    print(output.decode("utf-8"))
+
+    cmd = "adb shell"
+    r0 = subprocess.Popen(cmd, shell=True,
+                          stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    cmd = "ls"
+    cmds = [
+        "ls",
+        "ls -l",
+        "cd /mnt",
+        "ls",
+        "exit",
+    ]
+    cmdTest = "\n".join(cmds) + "\n"
+    print(cmdTest)
+    output = r0.communicate(cmdTest.encode("utf-8"))
+    for item in output:
+           print(item.decode("gbk").replace("\r\r", ""))
+    """ single command method begin """
+    # r0 = subprocess.Popen("adb shell", shell=True, stdin=subprocess.PIPE,  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    #
+    # r0.stdin.write(('ls\n'.encode("utf-8")))
+    # r0.stdin.write(('exit\n'.encode("utf-8")))
+    # output, error = r0.communicate()
+    # print(output.decode("gbk").replace("\r\r", ""))
+    """ single command method end """
+
 #
 # scheduler = BlockingScheduler()
 #
