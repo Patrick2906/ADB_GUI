@@ -13,7 +13,7 @@ from apscheduler.schedulers.background import BlockingScheduler
 from datetime import datetime
 from time import sleep
 
-'''1  blocking scheduler check'''
+'''1  abd shell cmd + blocking scheduler check'''
 # adb_path = os.getcwd() + "/ADB_WIN_LIB"
 # if os.path.isdir(adb_path):
 #     print("path exist")
@@ -21,14 +21,31 @@ from time import sleep
 #     # os.chdir("D:/tools/telit-tools")
 #     cmd = "adb devices"
 #     print(cmd)
-#     r0 = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#     r0 = subprocess.Popen(cmd, shell=True,
+#                           stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 #     output, error = r0.communicate()
-#     print(output.decode())
-#     cmd = "adb get-state"
-#     r0 = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-#     output, error = r0.communicate()
-#     print(output)
-#     print(error)
+#     print(output.decode("utf-8"))
+#
+#     cmd = "adb shell"
+#     r0 = subprocess.Popen(cmd, shell=True,
+#                           stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#     cmd = "ls"
+#     cmds = [
+#         "ls",
+#         "ls -l",
+#         "cd /mnt",
+#         "ls"
+#         "exit",
+#     ]
+#     cmdTest = "\n".join(cmds) + "\n"
+#     output = r0.communicate(cmdTest.encode("utf-8"))
+#
+#     print ("output:")
+#     temp = output.decode("utf-8")
+#     print("error:")
+#     print(error.decode("gbk"))
+#     for item in out:
+#        print(out.decode("gbk").replace("\n\n", "")
 #
 # scheduler = BlockingScheduler()
 #
@@ -172,38 +189,41 @@ second intervals.
 #         # Not strictly necessary if daemonic mode is enabled but should be done if possible
 #         scheduler.shutdown()
 #     print("shutdown")
-from tkinter import *
-import threading
 
 
-def func3(parameter):
-  threading.Thread(target=lambda: Plottingandselect(parameter)).start()
-  #using threading to call  the
-  #another window due to which above error is coming after opening and
-  #closing it 2-3 times
-
-def Plottingandselect(rollno):
-      window=Toplevel()
-      window.title("Marks Distribution")
-      Label(window, text=rollno).grid(row=1,column=2)
-
-      Label(window,text="X axis").grid(row=2,column=1)
-      Label(window, text="Marks",relief=SUNKEN).grid(row=3, column=1)
-      Label(window,text="Y axis").grid(row=2,column=3,padx=22)
-      OPTIONS1 = [
-        "Physics",
-        "Maths",
-        "Chemistry",
-        "Biology",
-      ]
-      list1 = Listbox(window, selectmode="multiple", relief=SUNKEN, font=("Times New Roman", 10))
-  #then user will select above parameters and graphs will be plotted and
-  #it is plotting also perfectly multiple times also , but when i am closing
- # this plotting window and again I select another roll number and do the
- #same 2-3 times it gives the following error
- # mt_debug I am using because I thought that mttkinter will handle it
-
-root = Tk()
-root.geometry('454x567')
-B = Button(root, text='Plot window', command=lambda: func3(1)).grid(row=1, column=2, padx=10, pady=10)
-root.mainloop()
+'''6 threading tk '''
+# from tkinter import *
+# import threading
+#
+#
+# def func3(parameter):
+#   threading.Thread(target=lambda: Plottingandselect(parameter)).start()
+#   #using threading to call  the
+#   #another window due to which above error is coming after opening and
+#   #closing it 2-3 times
+#
+# def Plottingandselect(rollno):
+#       window=Toplevel()
+#       window.title("Marks Distribution")
+#       Label(window, text=rollno).grid(row=1,column=2)
+#
+#       Label(window,text="X axis").grid(row=2,column=1)
+#       Label(window, text="Marks",relief=SUNKEN).grid(row=3, column=1)
+#       Label(window,text="Y axis").grid(row=2,column=3,padx=22)
+#       OPTIONS1 = [
+#         "Physics",
+#         "Maths",
+#         "Chemistry",
+#         "Biology",
+#       ]
+#       list1 = Listbox(window, selectmode="multiple", relief=SUNKEN, font=("Times New Roman", 10))
+#   #then user will select above parameters and graphs will be plotted and
+#   #it is plotting also perfectly multiple times also , but when i am closing
+#  # this plotting window and again I select another roll number and do the
+#  #same 2-3 times it gives the following error
+#  # mt_debug I am using because I thought that mttkinter will handle it
+#
+# root = Tk()
+# root.geometry('454x567')
+# B = Button(root, text='Plot window', command=lambda: func3(1)).grid(row=1, column=2, padx=10, pady=10)
+# root.mainloop()
