@@ -7,6 +7,7 @@
 '''
 import subprocess
 from tkinter.messagebox import showinfo
+from apscheduler.schedulers.background import BackgroundScheduler
 from tkinter import *
 
 ROW_LOGGING_FRAME = 0
@@ -32,14 +33,18 @@ WIND_OFFSET_HORIZONTAL = COLUMN_INSERT_WIN_2 - COLUMN_INSERT_WIN_1
 class Frame_OtaLog(Frame):
     def __init__(self, master=None):
         Frame.__init__(self, master)
+        self.idTbxLog = None
+        self.scheduler = None
         self.root = master
         self.lock = False
         self.createPage()
 
     def createPage(self):
-        # window1 #
+        print("otalog ready")
+        """ window1 """
         # dmclient log chat box label frame
-        self.cheatbox_frame_dmclient = LabelFrame(self.root, text='dmclient.log', width=WIDTH_FRAME_WIN_1, labelanchor=N)
+        self.cheatbox_frame_dmclient = LabelFrame(self.root, text='dmclient.log', width=WIDTH_FRAME_WIN_1,
+                                                  labelanchor=N)
         self.cheatbox_frame_dmclient.grid(row=ROW_LOGGING_FRAME, column=0, rowspan=15, columnspan=8)
 
         # dmclient logging window grouping with other widgets
@@ -55,7 +60,8 @@ class Frame_OtaLog(Frame):
         self.yscrollbar_dmclient.grid(row=0, column=8, rowspan=19, sticky=N + S + W)
 
         # list box to stroe the previous message **row2**
-        self.message_list_dmclient = Listbox(self.messages_frame_dmclient, height=WINDOW_HEIGHT, width=WIDTH_FRAME_WIN_1, bd=0,
+        self.message_list_dmclient = Listbox(self.messages_frame_dmclient, height=WINDOW_HEIGHT,
+                                             width=WIDTH_FRAME_WIN_1, bd=0,
                                              yscrollcommand=self.yscrollbar_dmclient.set,
                                              xscrollcommand=self.xscrollbar_dmclient.set)
         self.message_list_dmclient.grid(row=ROW_LISTBOX, column=0, rowspan=16)
@@ -63,7 +69,8 @@ class Frame_OtaLog(Frame):
         self.yscrollbar_dmclient.config(command=self.message_list_dmclient.yview)
 
         # command label frames of tbox update **row20**
-        self.cmd_frame_dmclient = LabelFrame(self.root, text='dmclient commands', width=WIDTH_FRAME_WIN_1, labelanchor=N)
+        self.cmd_frame_dmclient = LabelFrame(self.root, text='dmclient commands', width=WIDTH_FRAME_WIN_1,
+                                             labelanchor=N)
         self.cmd_frame_dmclient.grid(row=ROW_CMD_FRAME, column=COLUMN_INSERT_WIN_1, rowspan=5, columnspan=8)
 
         # input label showed below **row21**
@@ -80,13 +87,14 @@ class Frame_OtaLog(Frame):
 
         # clear **row23**
         self.dmclient_stop_button = Button(self.cmd_frame_dmclient, text="stop updating", padx=10, pady=5,
-                                           command=self.startGetting_DmclientLog)
+                                           command=self.stopGetting_DmclientLog)
         self.dmclient_stop_button.grid(row=ROW_STOP_BUTTON, column=COLUMN_INSERT_WIN_1, columnspan=8,
                                        sticky=W + E + N + S)
 
-        # window2 #
+        """ window2 """
         # tboxUpdate log chat box label frame
-        self.cheatbox_frame_tbxUpdate = LabelFrame(self.root, text='tbox-UpdateAgent', width=WIDTH_FRAME_WIN_2, labelanchor=N)
+        self.cheatbox_frame_tbxUpdate = LabelFrame(self.root, text='tbox-UpdateAgent', width=WIDTH_FRAME_WIN_2,
+                                                   labelanchor=N)
         self.cheatbox_frame_tbxUpdate.grid(row=0, column=COLUMN_INSERT_WIN_2, rowspan=15, columnspan=8)
 
         # tboxUpdate logging window grouping with other widgets
@@ -102,7 +110,8 @@ class Frame_OtaLog(Frame):
         self.yscrollbar_tbxUpdate.grid(row=0, column=COLUMN_INSERT_WIN_2, rowspan=19, sticky=E + N + S)
 
         # list box to stroe the previous message **row2**
-        self.message_list_tbxUpdate = Listbox(self.messages_frame_tbxUpdate, height=WINDOW_HEIGHT, width=WIDTH_FRAME_WIN_2, bd=0,
+        self.message_list_tbxUpdate = Listbox(self.messages_frame_tbxUpdate, height=WINDOW_HEIGHT,
+                                              width=WIDTH_FRAME_WIN_2, bd=0,
                                               yscrollcommand=self.yscrollbar_tbxUpdate.set,
                                               xscrollcommand=self.xscrollbar_tbxUpdate.set)
         self.message_list_tbxUpdate.grid(row=2, column=0, rowspan=16)
@@ -129,8 +138,11 @@ class Frame_OtaLog(Frame):
                                       command=self.stopGetting_TbxLog)
         self.tbx_stop_button.grid(row=ROW_STOP_BUTTON, column=COLUMN_INSERT_WIN_2, columnspan=8, sticky=W + E + N + S)
 
+        self.scheduler = BackgroundScheduler()
+        self.scheduler.start()
 
     def pageDestroy(self):
+        ret = 0
         self.cheatbox_frame_dmclient.grid_remove()
         self.messages_frame_dmclient.grid_remove()
         self.xscrollbar_dmclient.grid_remove()
@@ -149,28 +161,73 @@ class Frame_OtaLog(Frame):
         self.cmd_label_tbxUpdate.grid_remove()
         self.tbx_start_button.grid_remove()
         self.tbx_stop_button.grid_remove()
+        if self.scheduler is not None:
+            self.scheduler.remove_all_jobs()
+            self.scheduler.shutdown()
+            self.scheduler = None
 
+        return ret
+
+    def load_TbxLog(self):
+        #     n = p.poll()
+        #     message = p.stdout.readline().decode("gbk")
+        #     print(message)
+        self.jobTbxLog.pause()
+
+        r0 = subprocess.Popen("adb shell tail -f /custapp/mnt/log/ota/tbox-updateagent.log", shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE)
+        n = None
+        while n is None:
+            n = r0.poll()
+            message = r0.stdout.readline().decode("gbk")
+            if (message == ''):
+                print("empty")
+            else:
+                print(message)
+            self.updateMessage_tbox(message)
+        self.jobTbxLog.resume()
+
+    def load_Dmclient(self):
+        self.jobDmclient.pause()
+        print(self.jobDmclient)
+        self.jobDmclient.resume()
 
     def startGetting_TbxLog(self):
-        new_msg = ''
+        # r0 = subprocess.Popen("adb shell", shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+        #                       stderr=subprocess.PIPE)
+        # r0.stdin.write(("find / -path '*/log/ota/tbox-updateagent.log'\n".encode("utf-8")))
+        # r0.stdin.write(('exit\n'.encode("utf-8")))
+        # output, error = r0.communicate()
+        # self.updateMessage_tbox(output.decode("gbk").replace("\r\r", ""))
+        # print(output.decode("gbk").replace("\r\r", ""))
+
+        self.idTbxLog = "TBX_LOG"
+        self.jobTbxLog = self.scheduler.add_job(self.load_TbxLog, trigger='interval', seconds=1, id=self.idTbxLog)
+        self.cnt = 0
 
     def stopGetting_TbxLog(self):
         new_msg = ''
+        self.jobTbxLog.pause()
+        self.scheduler.remove_job(self.idTbxLog)
 
     def startGetting_DmclientLog(self):
         new_msg = ''
+        self.idDmclient = "DM_CLIENT"
+        self.jobDmclient = self.scheduler.add_job(self.load_Dmclient, trigger='interval', seconds=0.5,
+                                                  id=self.idDmclient)
+
         print("")
 
     def stopGetting_DmclientLog(self):
         new_msg = ''
+        self.jobDmclient.pause()
+        self.scheduler.remove_job(self.idDmclient)
         print("")
 
-    def updateMessage(self):
-        new_msg = ''
-        new_msg = self.input_entry.get()
-        self.input_entry.delete(0, END)  # clear inupt message
-
-        self.message_list_tbxUpdate.insert(END, new_msg)
+    def updateMessage_tbox(self, message):
+        newlines = message.splitlines(keepends=TRUE)
+        for line in newlines:
+            self.message_list_tbxUpdate.insert(END, line)
         self.message_list_tbxUpdate.see(END)  # show last line when text overflow
 
     def sendMessage(self):
@@ -186,5 +243,3 @@ class Frame_OtaLog(Frame):
 
     def clearMessage(self):
         self.message_list_tbxUpdate.delete(0, END)
-
-

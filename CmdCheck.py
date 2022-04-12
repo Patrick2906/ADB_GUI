@@ -6,6 +6,7 @@
     -*- coding: utf-8 -*-
 '''
 import os
+import re
 import subprocess
 import time
 
@@ -14,42 +15,42 @@ from datetime import datetime
 from time import sleep
 
 '''1  abd shell cmd + blocking scheduler check'''
-adb_path = os.getcwd() + "/ADB_WIN_LIB"
-if os.path.isdir(adb_path):
-    print("path exist")
-    os.environ["PATH"] += os.pathsep + adb_path
-    # os.chdir("D:/tools/telit-tools")
-    cmd = "adb devices"
-    print(cmd)
-    r0 = subprocess.Popen(cmd, shell=True,
-                          stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    output, error = r0.communicate()
-    print(output.decode("utf-8"))
-
-    cmd = "adb shell"
-    r0 = subprocess.Popen(cmd, shell=True,
-                          stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    cmd = "ls"
-    cmds = [
-        "ls",
-        "ls -l",
-        "cd /mnt",
-        "ls",
-        "exit",
-    ]
-    cmdTest = "\n".join(cmds) + "\n"
-    print(cmdTest)
-    output = r0.communicate(cmdTest.encode("utf-8"))
-    for item in output:
-           print(item.decode("gbk").replace("\r\r", ""))
-    """ single command method begin """
+# adb_path = os.getcwd() + "/ADB_WIN_LIB"
+# if os.path.isdir(adb_path):
+#     print("path exist")
+#     os.environ["PATH"] += os.pathsep + adb_path
+#     # os.chdir("D:/tools/telit-tools")
+#     cmd = "adb devices"
+#     print(cmd)
+#     r0 = subprocess.Popen(cmd, shell=True,
+#                           stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#     output, error = r0.communicate()
+#     print(output.decode("utf-8"))
+#
+#     cmd = "adb shell"
+#     r0 = subprocess.Popen(cmd, shell=True,
+#                           stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#     cmd = "ls"
+#     cmds = [
+#         "ls",
+#         "ls -l",
+#         "cd /mnt",
+#         "ls",
+#         "exit",
+#     ]
+#     cmdTest = "\n".join(cmds) + "\n"
+#     print(cmdTest)
+#     output = r0.communicate(cmdTest.encode("utf-8"))
+#     for item in output:
+#            print(item.decode("gbk").replace("\r\r", ""))
+''' single command method begin '''
     # r0 = subprocess.Popen("adb shell", shell=True, stdin=subprocess.PIPE,  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     #
     # r0.stdin.write(('ls\n'.encode("utf-8")))
     # r0.stdin.write(('exit\n'.encode("utf-8")))
     # output, error = r0.communicate()
     # print(output.decode("gbk").replace("\r\r", ""))
-    """ single command method end """
+''' single command method end '''
 
 #
 # scheduler = BlockingScheduler()
@@ -151,8 +152,11 @@ if os.path.isdir(adb_path):
 #     # print('Still pinging')
 #     n = p.poll()
 #     message = p.stdout.readline().decode("gbk")
-#     print(message)
-#     time.sleep(1)
+#     if(message == ''):
+#         print("empty")
+#     else:
+#         print(message)
+#     time.sleep(0.2)
 #
 # print('Not sleeping any longer.  Exited with returncode %d' % p.returncode)
 
@@ -232,3 +236,94 @@ second intervals.
 # root.geometry('454x567')
 # B = Button(root, text='Plot window', command=lambda: func3(1)).grid(row=1, column=2, padx=10, pady=10)
 # root.mainloop()
+
+'''7 to sieve out the device serial number '''
+# str_1 = "adbbc1fe3      device"
+# str_2 = re.search("device", str_1, re.I)
+# str_3 = "list of devices"
+# str_4 = re.search("device", str_3, re.I)
+# str_5 = []
+# str_5.append(str_1)
+# str_5.append(str_3)
+# print("str_2： %s" % str_2)
+# print("str_4： %s" % str_4)
+# print("str_2 group: %s" % str_2.group())
+# print("str_4 group: %s" % str_4.group())
+# print("str_1 without 'device'：%s" % str_1[0:str_2.span()[0]])
+# print("str_3 without 'device'：%s" % str_3[0:str_4.span()[0]])
+# str_3 = str_1[0:str_2.span()[0]].strip()
+#
+# devices = []
+# for item in str_5:
+#     device = None
+#     device = re.search("device", item, re.I)
+#     if device is not None:
+#         if re.search("list", item, re.I) is None:
+#             device = item[0:device.span()[0]]
+#             devices.append(device.strip())
+#
+# print("devices list: {}".format(devices))
+# print(str_3)
+
+
+import msvcrt
+import os
+
+from ctypes import windll, byref, wintypes, GetLastError, WinError
+from ctypes.wintypes import HANDLE, DWORD, LPDWORD, BOOL
+
+# LPDWORD = POINTER(DWORD)
+
+PIPE_NOWAIT = wintypes.DWORD(0x00000001)
+
+ERROR_NO_DATA = 232
+
+def pipe_no_wait(pipefd):
+  """ pipefd is a integer as returned by os.pipe """
+
+  SetNamedPipeHandleState = windll.kernel32.SetNamedPipeHandleState
+  SetNamedPipeHandleState.argtypes = [HANDLE, LPDWORD, LPDWORD, LPDWORD]
+  SetNamedPipeHandleState.restype = BOOL
+
+  h = msvcrt.get_osfhandle(pipefd)
+
+  res = windll.kernel32.SetNamedPipeHandleState(h, byref(PIPE_NOWAIT), None, None)
+  if res == 0:
+      print(WinError())
+      return False
+  return True
+
+
+if __name__  == '__main__':
+    adb_path = os.getcwd() + "/ADB_WIN_LIB"
+    if os.path.isdir(adb_path):
+        print("path exist")
+        os.environ["PATH"] += os.pathsep + adb_path
+        # os.chdir("D:/tools/telit-tools")
+        cmd = "adb devices"
+        print(cmd)
+        r0 = subprocess.Popen(cmd, shell=True,
+                              stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        output, error = r0.communicate()
+        print(output.decode("utf-8"))
+  # CreatePipe
+    r, w = os.pipe()
+    pipe_no_wait(r)
+
+    result = os.popen('adb shell "/custapp/bin/logcat -v time -b main | grep Eth"')
+    print(result.read())
+    print(222)
+    a = result.read()
+    print(a)
+    print(111)
+  # print(os.write(w,  "adb shell tail -f /custapp/mnt/log/ota/tbox-updateagent.log".encode("utf-8")))
+
+  # try:
+  #   print( os.write(w, 'ipconfig'.encode("utf-8")))
+  #   print(os.read(r, 1024))
+  #   print( os.read(r, 1024))
+  # except OSError as e:
+  #   print( dir(e), e.errno, GetLastError())
+  #   print(WinError())
+  #   if GetLastError() != ERROR_NO_DATA:
+  #       raise

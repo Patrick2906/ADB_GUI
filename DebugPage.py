@@ -45,6 +45,7 @@ DEBUG_PAGES = 5  # config the total pages
 OTALOG_PAGE_ID = 0
 SPECIALCOMMAND_PAGE_ID = 1
 
+SCHED_BACKGROUND_MSG = "background scheduler notify"
 
 class DebugPage(object):
     def __init__(self, master=None):
@@ -62,7 +63,7 @@ class DebugPage(object):
         self.scheduler = BackgroundScheduler()
         self.jobTestPresent = self.scheduler.add_job(self.tick, trigger='interval', seconds=1)
         self.scheduler.start()
-        self.cnt = 0
+
 
     def createPage(self):
         """ insert the pages in requirement """
@@ -80,20 +81,28 @@ class DebugPage(object):
 
     # to test the background scheduler
     def tick(self):
-        print('Tick! The time is: %s' % datetime.now())
-        self.cnt += 1
-        if self.cnt > 5:
-            self.scheduler.pause_job(self.jobTestPresent.id)
-            print("going to disconnect")
+        print("%s , time now: %s" % (SCHED_BACKGROUND_MSG, datetime.now()))
+        self.jobTestPresent.pause()
+        cmd = "adb get-state"
+        output, error = subprocess.getstatusoutput(cmd)
+        if output != 0:
+            print("{}, going to disconnect".format(error))
             self.adbDisconnected()
-            self.scheduler.resume()
+        self.jobTestPresent.resume()
 
     def pageActive(func):
         @functools.wraps(func)
         def deco(self, *args, **kwargs):
             # destroy pages as created
-            self.specialCmdPage.pageDestroy()
-            self.otaLogPage.pageDestroy()
+
+            ret = self.specialCmdPage.pageDestroy()
+            if ret != 0:
+                showinfo("message", "specialCmdPage still running")
+                return
+            ret = self.otaLogPage.pageDestroy()
+            if ret != 0:
+                showinfo("message", "otaLogPage still running")
+                return
             func(self, *args, **kwargs)
 
         return deco
@@ -112,7 +121,7 @@ class DebugPage(object):
         self.scheduler.remove_all_jobs()    # remove current, prevent jump to next cycle
         self.menubar.destroy()  # destroy menu bar
         print("scheduler stop")
-        abc = showinfo('Message', 'device disconnected ')
+        abc = showinfo('Message', 'device disconnected')
         self.status = PAGE_STATUS_SWITCHPAGE
         self.root.quit()
         print("quit root")
