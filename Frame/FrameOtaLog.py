@@ -40,7 +40,6 @@ class Frame_OtaLog(Frame):
         self.createPage()
 
     def createPage(self):
-        print("otalog ready")
         """ window1 """
         # dmclient log chat box label frame
         self.cheatbox_frame_dmclient = LabelFrame(self.root, text='dmclient.log', width=WIDTH_FRAME_WIN_1,

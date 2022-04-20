@@ -20,7 +20,7 @@ INFO_WINDOW_HEIGHT = 25
 CMD_WINDOW_WIDTH = INFO_WINDOW_WIDTH
 CMD_WINDOW_HEIGHT = 20
 
-ADB_SHELL_LOGCAT_CMD2 = 'adb shell "/custapp/bin/logcat -v time -b main | grep Eth"'
+ADB_SHELL_LOGCAT_CMD2 = 'adb shell "/custapp/bin/logcat -v time -b main | grep '
 ADB_SHELL_LOGCAT_CMD1 = "adb shell tail -f /custapp/mnt/log/ota/tbox-updateagent.log"
 
 COMMAND_LOCK_PATTERN = 0xCC
@@ -28,10 +28,11 @@ COMMAND_UNLOCK_PATTERN = 0x00
 
 COMMAND_TABLE = {
     '1': "get adb state",
-    '2': "get ipconfig",
+    '2': "upd test",
     '3': "push eth_app",
     '4': "cp & export",
-    '5': "kill process"
+    '5': "kill process",
+    '6': "push & exe locationSer"
 }
 
 
@@ -60,7 +61,6 @@ class Frame_SpecialCmd(Frame):
         self.r0 = None
 
     def createPage(self):
-        print("special ready")
         # command and result cheatbox
         self.cheatbox_frame_info = LabelFrame(self.root, text='command logging', width=60, labelanchor=N)
         self.cheatbox_frame_info.grid(row=0, column=0, rowspan=15, columnspan=8)
@@ -97,13 +97,21 @@ class Frame_SpecialCmd(Frame):
                                  command=self.getBox)
         self.get_button.grid(row=22, column=5, columnspan=2, sticky=W + E + N + S)
 
-        self.logcatEnable_button = Button(self.root, text="start logcat", padx=10, pady=5,
-                                    command=self.startLogcat_TbxLog)
-        self.logcatEnable_button.grid(row=23, column=0, columnspan=2, sticky=W + E + N + S)
+        self.logcat_frame_info = LabelFrame(self.root, text='logcat', width=60, labelanchor=N)
+        self.logcat_frame_info.grid(row=23, column=0, rowspan=15, columnspan=8, sticky=W + E + N + S)
 
-        self.logcatDisable_button = Button(self.root, text="stop logcat", padx=10, pady=5,
-                                    command=self.stopLogcat_TbxLog)
-        self.logcatDisable_button.grid(row=23, column=5, columnspan=2, sticky=W + E + N + S)
+        self.logcatStr = StringVar()
+        self.logcatStr.set('EthApp')
+        self.logcatInput_entry = Entry(self.logcat_frame_info, textvariable=self.logcatStr, width=25, borderwidth=3)
+        self.logcatInput_entry.grid(row=24, column=0, columnspan=2, sticky=W + E + N + S)
+
+        self.logcatEnable_button = Button(self.logcat_frame_info, text="start logcat", padx=10, pady=5,
+                                          command=self.startLogcat_TbxLog)
+        self.logcatEnable_button.grid(row=25, column=0, columnspan=2, sticky=W + E + N + S)
+
+        self.logcatDisable_button = Button(self.logcat_frame_info, text="stop logcat", padx=10, pady=5,
+                                           command=self.stopLogcat_TbxLog)
+        self.logcatDisable_button.grid(row=25, column=5, columnspan=2, sticky=W + E + N + S)
 
         # start scheduler
         self.scheduler = BackgroundScheduler()
@@ -121,6 +129,8 @@ class Frame_SpecialCmd(Frame):
         self.message_list_info.grid_remove()
         self.command_box.grid_remove()
         self.get_button.grid_remove()
+        self.logcat_frame_info.grid_remove()
+        self.logcatInput_entry.grid_remove()
         self.logcatEnable_button.grid_remove()
         self.logcatDisable_button.grid_remove()
         if self.scheduler is not None:
@@ -133,6 +143,8 @@ class Frame_SpecialCmd(Frame):
         if not self.logcatStatus.cmd_executing:
             self.idLogcat = "logcat"
             self.jobLogcat = self.scheduler.add_job(self.logcatRecv, trigger='interval', seconds=1, id=self.idLogcat)
+            indicator = self.logcatInput_entry.get()
+            self.logcatStr.set(indicator)
         else:
             self.updateMessage("###job already started###")
 
@@ -141,6 +153,9 @@ class Frame_SpecialCmd(Frame):
             self.logcatStatus.cmd_executing = False
 
             if self.logcatStatus.cmd_lockPattern == COMMAND_LOCK_PATTERN:
+                cmd_stop = self.logcatStr.get()
+                cmd_stop = "nohup ./eth_stop " + cmd_stop + " &"
+
                 cmd = "adb push E:\\temp\eth_app\eth_stop /data/userdata"
                 self.r1 = subprocess
                 print(self.r1.getoutput(cmd))
@@ -154,7 +169,7 @@ class Frame_SpecialCmd(Frame):
                     "export LD_LIBRARY_PATH=/custapp/lib:${LD_LIBRARY_PATH}",
                     "echo $LD_LIBRARY_PATH",
                     "chmod 777 ./eth_stop",
-                    "./eth_stop",
+                    cmd_stop,
                     "exit",
                 ]
                 cmd_list = "\n".join(cmds) + "\n"
@@ -163,14 +178,20 @@ class Frame_SpecialCmd(Frame):
                 for item in output:
                     debugMsg += item.decode("gbk").replace("\r\r", "")
                     print(debugMsg)
-                print("remove")
+
+
         else:
             self.updateMessage("###no job scheduled###")
 
     def logcatRecv(self):
         self.jobLogcat.pause()
         self.logcatStatus.cmd_executing = True
-        self.r0 = subprocess.Popen(ADB_SHELL_LOGCAT_CMD2, shell=True,
+
+        shell_cmd = self.logcatStr.get()
+        shell_cmd = ADB_SHELL_LOGCAT_CMD2 + shell_cmd + '"'
+        print("shell cmd:{}".format(shell_cmd))
+
+        self.r0 = subprocess.Popen(shell_cmd, shell=True,
                                    stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
         n = None
@@ -233,32 +254,37 @@ class ShellCommands(object):
         print("executing command1")
         ret_message = ''
         cmd = "adb get-state"
-        ret_message = subprocess.getoutput(cmd)
+        ret_message = self.sendCommands(cmd)
 
         return 0, ret_message
 
     def commands_2(self):
         print("executing command2")
         ret_message = ''
-        cmd = "ipconfig"
+        cmd = "adb push E:\\temp\eth_app\eth_udpTest /data/userdata"
+        ret_message += self.sendCommands(cmd)
 
-        ret_message = subprocess.getoutput(cmd)
+        cmds = [
+            "cp -f /data/userdata/eth_udpTest /usr/share",
+            "cd /usr/share/",
+            "chmod 777 ./eth_udpTest",
+            "exit",
+        ]
+        ret_message += self.sendCommands(cmds)
+
         return 0, ret_message
 
     def commands_3(self):
         print("executing command4")
         ret_message = ''
         cmd = "adb push E:\\temp\eth_app\eth_app /data/userdata"
+        ret_message = self.sendCommands(cmd)
 
-        ret_message = subprocess.getoutput(cmd)
         return 0, ret_message
 
     def commands_4(self):
         print("executing command4")
         ret_message = ''
-        cmd = "adb shell"
-        r0 = subprocess.Popen(cmd, shell=True,
-                              stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         cmds = [
             "cp -f /data/userdata/eth_app /usr/share",
@@ -268,31 +294,40 @@ class ShellCommands(object):
             # "echo $LD_LIBRARY_PATH",
             "exit",
         ]
-        cmd_list = "\n".join(cmds) + "\n"
-        output = r0.communicate(cmd_list.encode("utf-8"))
-        for item in output:
-            ret_message += item.decode("gbk").replace("\r\r", "")
-            print(ret_message)
 
+        ret_message = self.sendCommands(cmds)
         return 0, ret_message
 
     def commands_5(self):
         print("executing command5")
         ret_message = ''
-        cmd = "adb shell"
-        r0 = subprocess.Popen(cmd, shell=True,
-                              stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         cmds = [
             "pkill -9 monitor_app",
             "pkill -9 eth_app",
             "exit",
         ]
-        cmd_list = "\n".join(cmds) + "\n"
-        output = r0.communicate(cmd_list.encode("utf-8"))
-        for item in output:
-            ret_message += item.decode("gbk").replace("\r\r", "")
-            print(ret_message)
+
+        ret_message = self.sendCommands(cmds)
+
+        return 0, ret_message
+
+    def commands_6(self):
+        print("executing command6")
+        ret_message = ''
+        cmd = "adb push E:\\temp\eth_app\pr_location_service /online"
+        ret_message += self.sendCommands(cmd)
+
+        cmds = [
+            "cd /online",
+            "chmod 777 ./pr_location_service",
+            "export LD_LIBRARY_PATH=/custapp/lib:${LD_LIBRARY_PATH}",
+            "echo $LD_LIBRARY_PATH",
+            "pkill -9 pr_location_service",
+            "nohup ./pr_location_service &",
+            "exit",
+        ]
+        ret_message += self.sendCommands(cmds)
 
         return 0, ret_message
 
@@ -300,3 +335,23 @@ class ShellCommands(object):
         name_of_method = "commands_" + str(no)
         method = getattr(self, name_of_method, lambda: -1)  # return -1 for invalid command
         return method()
+
+    def sendCommands(self, cmds):
+        # single command
+        if isinstance(cmds, str):
+            return subprocess.getoutput(cmds)
+        elif isinstance(cmds, list):
+            msg = ""
+            r0 = subprocess.Popen("adb shell", shell=True,
+                                  stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+            cmd_list = "\n".join(cmds) + "\n"
+            output = r0.communicate(cmd_list.encode("utf-8"))
+            for item in output:
+                msg += item.decode("gbk").replace("\r\r", "")
+                print(msg)
+
+            return msg
+        else:
+            return "invalid input command"
+
