@@ -13,3 +13,10 @@ PAGE_STATUS_SWITCHPAGE = 1  # indicate to switch to other page
 
 PAGE_ID_HOME = 1  # home page when start
 PAGE_ID_DEBUG = 2  # debug page after connected
+PAGE_ID_API = 3 # API page which enter directly
+
+ADB_PUSH = "adb push " # reserve space
+
+ADB_SHELL_LOGCAT_CMD2 = 'adb shell "/custapp/bin/logcat -v time -b main | grep '
+ADB_SHELL_LOGCAT_CMD1 = "adb shell tail -f /custapp/mnt/log/ota/tbox-updateagent.log"
+ADB_SHELL_LOGCAT_CMD3 = 'adb shell '
