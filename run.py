@@ -7,6 +7,7 @@
 '''
 from DebugPage import *
 from HomePage import *
+from ApiPage import *
 from config import *
 
 
@@ -15,6 +16,7 @@ class APP(Tk):
         Tk.__init__(self)
         self.page = None
         self.pageID = 0  # initial
+        self.pageID_next = 0
 
     def run(self, initialPage, id):
         self.page = initialPage(self)
@@ -22,6 +24,7 @@ class APP(Tk):
         while True:
             self.mainloop()
             if self.page.status == PAGE_STATUS_SWITCHPAGE:
+                self.pageID_next = self.page.newPage
                 self.setPage()
             elif self.page.status == PAGE_STATUS_ERR:
                 print("error condition occurred")
@@ -30,13 +33,15 @@ class APP(Tk):
                 break
 
     def setPage(self):
-        if self.pageID == PAGE_ID_HOME:
+        if self.pageID_next == PAGE_ID_DEBUG:
             self.page = DebugPage(self)
             self.pageID = PAGE_ID_DEBUG     # set new page id
-        elif self.pageID == PAGE_ID_DEBUG:
+        elif self.pageID_next == PAGE_ID_HOME:
             self.page = HomePage(self)
             self.pageID = PAGE_ID_HOME      # set new page id
-
+        elif self.pageID_next == PAGE_ID_API:
+            self.page = ApiPage(self)   # set new page id
+            self.pageID = PAGE_ID_API
 
 _app = APP()
 

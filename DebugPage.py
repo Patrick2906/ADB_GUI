@@ -51,6 +51,7 @@ class DebugPage(object):
     def __init__(self, master=None):
         self.root = master
         self.status = 0
+        self.newPage = PAGE_ID_DEBUG
         self.menubar = None
         self.p0 = None  # process for connection check
         print("status: {}".format(self.status))
@@ -123,6 +124,7 @@ class DebugPage(object):
         print("scheduler stop")
         abc = showinfo('Message', 'device disconnected')
         self.status = PAGE_STATUS_SWITCHPAGE
+        self.newPage = PAGE_ID_HOME
         self.root.quit()
         print("quit root")
 

@@ -9,6 +9,13 @@ import subprocess
 from tkinter.messagebox import showinfo
 from apscheduler.schedulers.background import BackgroundScheduler
 from tkinter import *
+import os
+from config import *
+
+ETH_STOP_PATH = os.getcwd() + "/ADB_WIN_LIB/eth_stop"
+
+COMMAND_LOCK_PATTERN = 0xCC
+COMMAND_UNLOCK_PATTERN = 0x00
 
 ROW_LOGGING_FRAME = 0
 ROW_LOGGING_LABEL = 1
@@ -29,15 +36,25 @@ COLUMN_INSERT_WIN_2 = 60
 WINDOW_HEIGHT = ROW_XSCROLL + 6
 WIND_OFFSET_HORIZONTAL = COLUMN_INSERT_WIN_2 - COLUMN_INSERT_WIN_1
 
+class CmdStatus:
+    def __init__(self, master=None):
+        self.cmd_executing = False
+        self.cmd_lockPattern = COMMAND_UNLOCK_PATTERN
+        self.cmd_lastStr = ''
 
 class Frame_OtaLog(Frame):
     def __init__(self, master=None):
         Frame.__init__(self, master)
+        self.r0 = None
         self.idTbxLog = None
         self.scheduler = None
         self.root = master
         self.lock = False
         self.createPage()
+        self.dmClientStatus = CmdStatus()
+        self.tbxLogStatus = CmdStatus()
+        self.lastStrTboxLog = None
+
 
     def createPage(self):
         """ window1 """
@@ -142,6 +159,8 @@ class Frame_OtaLog(Frame):
 
     def pageDestroy(self):
         ret = 0
+        # if self.tbxLogStatus.cmd_lockPattern == COMMAND_LOCK_PATTERN:
+
         self.cheatbox_frame_dmclient.grid_remove()
         self.messages_frame_dmclient.grid_remove()
         self.xscrollbar_dmclient.grid_remove()
@@ -192,53 +211,78 @@ class Frame_OtaLog(Frame):
         self.jobDmclient.resume()
 
     def startGetting_TbxLog(self):
-        # r0 = subprocess.Popen("adb shell", shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-        #                       stderr=subprocess.PIPE)
-        # r0.stdin.write(("find / -path '*/log/ota/tbox-updateagent.log'\n".encode("utf-8")))
-        # r0.stdin.write(('exit\n'.encode("utf-8")))
-        # output, error = r0.communicate()
-        # self.updateMessage_tbox(output.decode("gbk").replace("\r\r", ""))
-        # print(output.decode("gbk").replace("\r\r", ""))
-
-        self.idTbxLog = "TBX_LOG"
-        self.jobTbxLog = self.scheduler.add_job(self.load_TbxLog, trigger='interval', seconds=1, id=self.idTbxLog)
-        self.cnt = 0
+        if not self.tbxLogStatus.cmd_executing:
+            self.idTbxLog = "TBX_LOG"
+            self.jobTbxLog = self.scheduler.add_job(self.load_TbxLog, trigger='interval', seconds=1, id=self.idTbxLog)
+        else:
+            self.updateMessage_tbox("###tbx job already started###")
 
     def stopGetting_TbxLog(self):
-        new_msg = ''
+        if self.tbxLogStatus.cmd_executing:
+            self.tbxLogStatus.cmd_executing = FALSE
+
+            if self.tbxLogStatus.cmd_lockPattern == COMMAND_LOCK_PATTERN:
+                self.sendLogcat_stopScript(self.tbxLogStatus.cmd_lastStr)
+
         self.jobTbxLog.pause()
         self.scheduler.remove_job(self.idTbxLog)
 
     def startGetting_DmclientLog(self):
-        new_msg = ''
-        self.idDmclient = "DM_CLIENT"
-        self.jobDmclient = self.scheduler.add_job(self.load_Dmclient, trigger='interval', seconds=0.5,
-                                                  id=self.idDmclient)
-
-        print("")
+        if not self.dmClientStatus.cmd_executing:
+            self.idDmclient = "DM_CLIENT"
+            self.jobDmclient = self.scheduler.add_job(self.load_Dmclient, trigger='interval', seconds=0.5,
+                                                id=self.idDmclient)
+        else:
+            self.updateMessage_dm("###dmClient job already started###")
 
     def stopGetting_DmclientLog(self):
-        new_msg = ''
+
         self.jobDmclient.pause()
         self.scheduler.remove_job(self.idDmclient)
         print("")
 
+    #tbox_updateagent.log
     def updateMessage_tbox(self, message):
         newlines = message.splitlines(keepends=TRUE)
         for line in newlines:
             self.message_list_tbxUpdate.insert(END, line)
         self.message_list_tbxUpdate.see(END)  # show last line when text overflow
 
-    def sendMessage(self):
-        newMsg = ''
-        print("sent")
-        self.count = self.count + 1
+    # dmclient.log
+    def updateMessage_dm(self, message):
+        newlines = message.splitlines(keepends=TRUE)
+        for line in newlines:
+            self.message_list_dmclient.insert(END, line)
+        self.message_list_dmclient.see(END)
 
-        newMsg = self.input_entry.get()
-        self.input_entry.delete(0, END)  # clear input message
+    def sendLogcat_stopScript(self, lastStr=""):
+        cmd_stop = lastStr
+        cmd_stop = "nohup ./eth_stop " + cmd_stop + " &"
 
-        self.message_list_tbxUpdate.insert(END, newMsg + str(self.count))
-        self.message_list_tbxUpdate.see(END)  # show last line when text overflow
+        cmd = ADB_PUSH + ETH_STOP_PATH + " /data/userdata"  # "adb push E:\\temp\eth_app\eth_stop /data/userdata"
+        self.r0 = subprocess
+        print(self.r0.getoutput(cmd))
+        cmd = "adb shell"
+        self.r0 = subprocess.Popen(cmd, shell=True,
+                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        cmds = [
+            "cp -f /data/userdata/eth_stop /usr/share",
+            "rm -f /data/userdata/eth_stop",
+            "cd /usr/share/",
+            "export LD_LIBRARY_PATH=/custapp/lib:${LD_LIBRARY_PATH}",
+            "echo $LD_LIBRARY_PATH",
+            "chmod 777 ./eth_stop",
+            cmd_stop,
+            "exit",
+        ]
+        cmd_list = "\n".join(cmds) + "\n"
+        debugMsg = ''
+        output = self.r0.communicate(cmd_list.encode("utf-8"))
+        for item in output:
+            debugMsg += item.decode("gbk").replace("\r\r", "")
+            print(debugMsg)
 
     def clearMessage(self):
         self.message_list_tbxUpdate.delete(0, END)
+        self.message_list_dmclient.delete(0, END)

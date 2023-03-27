@@ -44,12 +44,12 @@ from time import sleep
 #     for item in output:
 #            print(item.decode("gbk").replace("\r\r", ""))
 ''' single command method begin '''
-    # r0 = subprocess.Popen("adb shell", shell=True, stdin=subprocess.PIPE,  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    #
-    # r0.stdin.write(('ls\n'.encode("utf-8")))
-    # r0.stdin.write(('exit\n'.encode("utf-8")))
-    # output, error = r0.communicate()
-    # print(output.decode("gbk").replace("\r\r", ""))
+# r0 = subprocess.Popen("adb shell", shell=True, stdin=subprocess.PIPE,  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#
+# r0.stdin.write(('ls\n'.encode("utf-8")))
+# r0.stdin.write(('exit\n'.encode("utf-8")))
+# output, error = r0.communicate()
+# print(output.decode("gbk").replace("\r\r", ""))
 ''' single command method end '''
 
 #
@@ -238,6 +238,7 @@ second intervals.
 # root.mainloop()
 
 '''7 to sieve out the device serial number '''
+
 # str_1 = "adbbc1fe3      device"
 # str_2 = re.search("device", str_1, re.I)
 # str_3 = "list of devices"
@@ -265,65 +266,205 @@ second intervals.
 # print("devices list: {}".format(devices))
 # print(str_3)
 
-
-import msvcrt
-import os
-
-from ctypes import windll, byref, wintypes, GetLastError, WinError
-from ctypes.wintypes import HANDLE, DWORD, LPDWORD, BOOL
-
-# LPDWORD = POINTER(DWORD)
-
-PIPE_NOWAIT = wintypes.DWORD(0x00000001)
-
-ERROR_NO_DATA = 232
-
-def pipe_no_wait(pipefd):
-  """ pipefd is a integer as returned by os.pipe """
-
-  SetNamedPipeHandleState = windll.kernel32.SetNamedPipeHandleState
-  SetNamedPipeHandleState.argtypes = [HANDLE, LPDWORD, LPDWORD, LPDWORD]
-  SetNamedPipeHandleState.restype = BOOL
-
-  h = msvcrt.get_osfhandle(pipefd)
-
-  res = windll.kernel32.SetNamedPipeHandleState(h, byref(PIPE_NOWAIT), None, None)
-  if res == 0:
-      print(WinError())
-      return False
-  return True
+''' 8 to open binary '''
+# def OpenAndPrint():
+#     f = open(file="E:\\temp\\files\\dk_data", mode="rb")
+#     print("result: {}\n".format(f))
+#     text = f.read()
+#     print(text)
+#     f.close()
+#
+# OpenAndPrint()
 
 
-if __name__  == '__main__':
-    adb_path = os.getcwd() + "/ADB_WIN_LIB"
-    if os.path.isdir(adb_path):
-        print("path exist")
-        os.environ["PATH"] += os.pathsep + adb_path
-        # os.chdir("D:/tools/telit-tools")
-        cmd = "adb devices"
-        print(cmd)
-        r0 = subprocess.Popen(cmd, shell=True,
-                              stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        output, error = r0.communicate()
-        print(output.decode("utf-8"))
-  # CreatePipe
-    r, w = os.pipe()
-    pipe_no_wait(r)
+'''9 generate QR Code'''
+# import qrcode
+# import datetime
+# import os,getpass
+# import json
+#
+#
+# # #输入待转换的字符串
+# # qrstr = input("Enter the string to be converted:")
+# # print("Input :"+qrstr)
+# # #采用默认方式生成二维码
+# # qrimg = qrcode.make(qrstr)
+#
+# qrimg = qrcode.QRCode(
+#     error_correction=qrcode.constants.ERROR_CORRECT_M,
+#     box_size=10,
+#     border=4
+# )
+# qrimg.add_data("https://api-pre.jf-mall.com/car/activate/v1.0/car/getByVin?vin=QCTESTVIN00000191&iccid=898608071922D0196641")
+# qrimg.make(fit=True)
+# img = qrimg.make_image(fill_color="blue", back_color="white")
+#
+# # #获取当前时间,转化成字符串
+# timenow = datetime.datetime.now()
+# timestr = timenow.strftime("%Y-%m-%d-%H-%M-%S")
+# # #生成带时间的二维码图片名,图片保存在桌面上
+# qrname = "{1}.png".format(getpass.getuser(), timestr)
+# print("Save as :", qrname)
+#
+# # #保存二维码图片
+# with open('test.png', 'wb') as qrname:
+#     img.save(qrname)
+# # img.show()
 
-    result = os.popen('adb shell "/custapp/bin/logcat -v time -b main | grep Eth"')
-    print(result.read())
-    print(222)
-    a = result.read()
-    print(a)
-    print(111)
-  # print(os.write(w,  "adb shell tail -f /custapp/mnt/log/ota/tbox-updateagent.log".encode("utf-8")))
 
-  # try:
-  #   print( os.write(w, 'ipconfig'.encode("utf-8")))
-  #   print(os.read(r, 1024))
-  #   print( os.read(r, 1024))
-  # except OSError as e:
-  #   print( dir(e), e.errno, GetLastError())
-  #   print(WinError())
-  #   if GetLastError() != ERROR_NO_DATA:
-  #       raise
+
+#
+# # 实例化QRCode生成qr对象
+# qr = qrcode.QRCode(
+#     version=1,
+#     error_correction=qrcode.constants.ERROR_CORRECT_Q,
+#     box_size=10,
+#     border=4
+# )
+# # 传入数据
+# qr.add_data(data)
+#
+# qr.make(fit=True)
+#
+# # 生成二维码
+# img = qr.make_image()
+#
+# # 保存二维码
+# # img.save(img_file)
+# with open('test.png', 'wb') as qrname:
+#     print(qrname)
+#     img.save(qrname)
+# # 展示二维码
+
+
+'''10 AES ECB pkcs5padding encryption'''
+# import json
+# from Crypto.Cipher import AES
+# import base64
+# import hashlib
+#
+#
+#
+# salt = "c87437fa-8bf4-1132-6616-c867479fce00"
+# access_key = "dms"
+#
+# output = \
+#     {
+#         "code": 0,
+#         "message": "请求成功"
+#     }
+#
+# check_body = {
+#     "carSales": [
+#         {
+#             "vinNo": "LNIC4SAH2MA002306",
+#             "licensePlate": None,
+#             "salesCity": None,
+#             "vehicleUse": "1",
+#             "carPurchaseField": "单位用车",
+#             "operatingUnit": None,
+#             "productionDate": "2022-09-22",
+#             "saleDate": "2022-09-27",
+#             "registrationDate": None,
+#             "batteryType": None,
+#             "batteryCode": None,00
+#             "driveMotorModel": None,
+#             "driveMotorCode": "RNIC1M04M23106",
+#             "motorPosition": None,
+#             "driveMotorSerial": None,
+#             "serviceExpirationDate": None,
+#             "insuranceExpirationDate": None,
+#             "annualReviewDate": None,
+#             "invoiceNumber": None,
+#             "invoiceDate": None,
+#             "invoicePicture": None,
+#             "carOwnerName": "轻橙时代（重庆）销售服务有限公司",
+#             "carOwnerMobile": "13924250339",
+#             "identityNumber": "6220220823556826188",
+#             "drivingLicenseBeginTime": None,
+#             "drivingLicenseEndTime": None,
+#             "drivingLicensePicture": None,
+#             "driverLicenseBeginTime": None,
+#             "driverLicenseEndTime": None,
+#             "driverLicensePicture": None,
+#             "salesCode": "NLN15A005008AT2"
+#         }
+#     ]
+# }
+#
+# class Encryption:
+#     def __init__(self, key):
+#         self.key = key.encode("utf-8")
+#         self.length = AES.block_size
+#         self.aes = AES.new(self.key, AES.MODE_ECB)
+#         # strip padding bytes
+#         self.unpad = lambda data: data[0: -ord(data[-1])]
+#
+#     def pad(self, text):
+#         count = len(text.encode("utf-8"))
+#         add = self.length - (count % self.length)
+#         entext = text + (chr(add) * add)
+#         return entext
+#
+#     def encrypt(self, encryptData):
+#         res = self.aes.encrypt(self.pad(encryptData).encode("utf-8"))
+#         # msg = str(base64.b64encode(res), encoding ="utf8")
+#         msg = res
+#         return msg
+#
+#     def decrypt(self, decryptData):
+#         # res = base64.decodebytes(decryptData.encode("utf-8"))
+#         res = decryptData
+#         msg = self.aes.decrypt(res).decode("utf-8")
+#         return self.unpad(msg)
+#
+#
+# '''sample begin '''
+# # eg = Encryption("xxxxaaaabbbbcccc")
+# # data = {"hotelCode": "330122892X", "realName": "张四五", "sex": "1"}
+# # result = eg.encrypt(str(data))
+# # print(result)
+# # print(eg.decrypt(result))
+# '''sample end '''
+#
+# time_stamp = "1669964210181"
+# nonce = "KKnz0EI1EGMZGy3QssKeDQQ19JULM45n"
+# val_joint = salt + time_stamp + nonce + access_key
+# print("value joint: {}".format(val_joint))
+#
+# md5_text = hashlib.md5()
+# md5_text.update(val_joint.encode("utf-8"))
+# md5_hex = md5_text.hexdigest().upper()
+# print("md5 result:{}".format(md5_hex))
+# secret_key = md5_hex[0:16]
+# print("secret key:{}".format(secret_key))
+#
+# ag = Encryption(secret_key)
+# respond_dict = {"code": 0, "message": "请求成功"}
+# respond = "{\"code\":0,\"message\":\"请求成功\"}"
+# # data = json.dumps(output, indent=0, ensure_ascii=False)
+#
+# result = ag.encrypt(respond)
+# print("result utf-8:{}".format(result))
+# print("result hex:{}".format(result.hex().upper()))
+# print(ag.decrypt(result))
+# # print("{\"repairPhone\":\"18547854787\",\"customPhone\":\"12365478965\",\"captchav\":\"58m7\"}")
+# # encrypt_temp = "27DD39BAD8CAE979EB9675B464E0BCDF3A578F6CCFCBA945FBDA6FD9FF4C12CA9EDCDA3A1EA40FA64A7904701162A3F71443E73D120A761C663CEF99265BBB228BF923361E13EFA5CEFD5BF7D02BB548";
+# # byte_encrypt_temp = bytes.fromhex(encrypt_temp)
+# # print(ag.decrypt(byte_encrypt_temp))
+#
+# result = ag.encrypt(json.dumps(respond_dict, separators=(',', ':'), ensure_ascii=False))
+# print("result_dict utf-8:{}".format(result))
+# print("result_dict hex:{}".format(result.hex().upper()))
+# result = ag.encrypt(json.dumps(check_body, separators=(',', ':'), ensure_ascii=False))
+# print(json.dumps(check_body, separators=(',', ':'), ensure_ascii=False))
+# print("body_dict utf-8:{}".format(result))
+# print("body_dict hex:{}".format(result.hex().upper()))
+# print("body_dict hex:{}".format(result.hex().upper().encode("utf-8")))
+#
+# print(json.loads(respond))
+
+text_str = "0:12:20:5787 Rx 1 343 s 8 CD 25 48 00 38 70 AC 62"
+Array_a = text_str.split(" ")
+print("array:{}".format(Array_a))
+print("type:{}".format(type(Array_a)))

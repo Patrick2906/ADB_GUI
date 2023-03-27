@@ -31,6 +31,7 @@ class HomePage(object):
     def __init__(self, master=None):
         self.page = None
         self.status = 0
+        self.newPage = PAGE_ID_HOME
         self.root = master
         # self.root.geometry('%dx%d' % (300, 180))  # MainPage size
         self.createPage()
@@ -40,11 +41,23 @@ class HomePage(object):
         self.page.grid(padx=100, pady=60, sticky=W + E + N + S)
         # self.page.pack()  # pack the components
 
+        self.connectButton = Button(self.page, text='TSP API', width=12, command=self.apiConfig)
+        self.connectButton.grid(stick=N, pady=10)
+
         self.connectButton = Button(self.page, text='ADB Connect', width=12, command=self.adbConnect)
         self.connectButton.grid(stick=N, pady=10)
 
         self.quitButton = Button(self.page, text='Quit', width=12, command=self.homePageRun)
         self.quitButton.grid(stick=N, pady=10)
+
+    def apiConfig(self):
+        self.connectButton.grid_remove()
+        self.quitButton.grid_remove()
+        self.page.grid_remove()
+        self.page.quit()
+        self.status = PAGE_STATUS_SWITCHPAGE  # exit page number 1
+        self.newPage = PAGE_ID_API
+
 
     def adbConnect(self):
         if os.path.isdir(ADB_PATH):
@@ -87,6 +100,7 @@ class HomePage(object):
                     self.page.grid_remove()
                     self.page.quit()
                     self.status = PAGE_STATUS_SWITCHPAGE  # exit page number 1
+                    self.newPage = PAGE_ID_DEBUG
                 else:
                     self.emptyList()
 

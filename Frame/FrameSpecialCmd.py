@@ -11,8 +11,10 @@ import tkinter.ttk
 from tkinter.messagebox import showinfo
 from tkinter import *
 from tkinter.ttk import Combobox
-import sys
+import os
 from apscheduler.schedulers.background import BackgroundScheduler
+from config import *
+ETH_STOP_PATH = os.getcwd() + "/ADB_WIN_LIB/eth_stop"
 
 INFO_WINDOW_WIDTH = 60
 INFO_WINDOW_HEIGHT = 25
@@ -20,19 +22,17 @@ INFO_WINDOW_HEIGHT = 25
 CMD_WINDOW_WIDTH = INFO_WINDOW_WIDTH
 CMD_WINDOW_HEIGHT = 20
 
-ADB_SHELL_LOGCAT_CMD2 = 'adb shell "/custapp/bin/logcat -v time -b main | grep '
-ADB_SHELL_LOGCAT_CMD1 = "adb shell tail -f /custapp/mnt/log/ota/tbox-updateagent.log"
-
 COMMAND_LOCK_PATTERN = 0xCC
 COMMAND_UNLOCK_PATTERN = 0x00
 
 COMMAND_TABLE = {
     '1': "get adb state",
-    '2': "upd test",
+    '2': "push OnBoard test",
     '3': "push eth_app",
-    '4': "cp & export",
-    '5': "kill process",
-    '6': "push & exe locationSer"
+    '4': "kill process",
+    '5': "push & exe locationSer",
+    '6': "tcpdump",
+    # '7': "pull tcpdump"
 }
 
 
@@ -44,11 +44,12 @@ class CmdStatus:
     def __init__(self, master=None):
         self.cmd_executing = False
         self.cmd_lockPattern = COMMAND_UNLOCK_PATTERN
-
+        self.cmd_lastStr = ''
 
 class Frame_SpecialCmd(Frame):
     def __init__(self, master=None):
         Frame.__init__(self, master)
+        self.lastStr = None
         self.idLogcat = ''
         self.last_status = None
         self.lock = False
@@ -102,6 +103,7 @@ class Frame_SpecialCmd(Frame):
 
         self.logcatStr = StringVar()
         self.logcatStr.set('EthApp')
+        self.lastStr = 'EthApp'
         self.logcatInput_entry = Entry(self.logcat_frame_info, textvariable=self.logcatStr, width=25, borderwidth=3)
         self.logcatInput_entry.grid(row=24, column=0, columnspan=2, sticky=W + E + N + S)
 
@@ -143,8 +145,8 @@ class Frame_SpecialCmd(Frame):
         if not self.logcatStatus.cmd_executing:
             self.idLogcat = "logcat"
             self.jobLogcat = self.scheduler.add_job(self.logcatRecv, trigger='interval', seconds=1, id=self.idLogcat)
-            indicator = self.logcatInput_entry.get()
-            self.logcatStr.set(indicator)
+            # indicator = self.logcatInput_entry.get()
+            # self.logcatStr.set(indicator)
         else:
             self.updateMessage("###job already started###")
 
@@ -153,33 +155,7 @@ class Frame_SpecialCmd(Frame):
             self.logcatStatus.cmd_executing = False
 
             if self.logcatStatus.cmd_lockPattern == COMMAND_LOCK_PATTERN:
-                cmd_stop = self.logcatStr.get()
-                cmd_stop = "nohup ./eth_stop " + cmd_stop + " &"
-
-                cmd = "adb push E:\\temp\eth_app\eth_stop /data/userdata"
-                self.r1 = subprocess
-                print(self.r1.getoutput(cmd))
-                cmd = "adb shell"
-                self.r1 = subprocess.Popen(cmd, shell=True,
-                                           stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-                cmds = [
-                    "cp -f /data/userdata/eth_stop /usr/share",
-                    "cd /usr/share/",
-                    "export LD_LIBRARY_PATH=/custapp/lib:${LD_LIBRARY_PATH}",
-                    "echo $LD_LIBRARY_PATH",
-                    "chmod 777 ./eth_stop",
-                    cmd_stop,
-                    "exit",
-                ]
-                cmd_list = "\n".join(cmds) + "\n"
-                debugMsg = ''
-                output = self.r1.communicate(cmd_list.encode("utf-8"))
-                for item in output:
-                    debugMsg += item.decode("gbk").replace("\r\r", "")
-                    print(debugMsg)
-
-
+                self.sendLogcat_stopScript()
         else:
             self.updateMessage("###no job scheduled###")
 
@@ -188,6 +164,7 @@ class Frame_SpecialCmd(Frame):
         self.logcatStatus.cmd_executing = True
 
         shell_cmd = self.logcatStr.get()
+        self.lastStr = shell_cmd
         shell_cmd = ADB_SHELL_LOGCAT_CMD2 + shell_cmd + '"'
         print("shell cmd:{}".format(shell_cmd))
 
@@ -227,6 +204,34 @@ class Frame_SpecialCmd(Frame):
             self.message_list_info.insert(END, line)
         self.message_list_info.see(END)  # show last line when text overflow
 
+    def sendLogcat_stopScript(self):
+        cmd_stop = self.lastStr
+        cmd_stop = "nohup ./eth_stop " + cmd_stop + " &"
+
+        cmd = ADB_PUSH + ETH_STOP_PATH + " /data/userdata"  # "adb push E:\\temp\eth_app\eth_stop /data/userdata"
+        self.r1 = subprocess
+        print(self.r1.getoutput(cmd))
+        cmd = "adb shell"
+        self.r1 = subprocess.Popen(cmd, shell=True,
+                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        cmds = [
+            "cp -f /data/userdata/eth_stop /usr/share",
+            "rm -f /data/userdata/eth_stop",
+            "cd /usr/share/",
+            "export LD_LIBRARY_PATH=/custapp/lib:${LD_LIBRARY_PATH}",
+            "echo $LD_LIBRARY_PATH",
+            "chmod 777 ./eth_stop",
+            cmd_stop,
+            "exit",
+        ]
+        cmd_list = "\n".join(cmds) + "\n"
+        debugMsg = ''
+        output = self.r1.communicate(cmd_list.encode("utf-8"))
+        for item in output:
+            debugMsg += item.decode("gbk").replace("\r\r", "")
+            print(debugMsg)
+
     def getBox(self):
         cmd_str = self.command_box.get()
         # other way to get
@@ -261,13 +266,14 @@ class ShellCommands(object):
     def commands_2(self):
         print("executing command2")
         ret_message = ''
-        cmd = "adb push E:\\temp\eth_app\eth_udpTest /data/userdata"
+        cmd = "adb push E:\\temp\eth_app\OnBoard_test /data/userdata"
         ret_message += self.sendCommands(cmd)
 
         cmds = [
-            "cp -f /data/userdata/eth_udpTest /usr/share",
+            "cp -f /data/userdata/OnBoard_test /usr/share",
+            "rm -f /data/userdata/OnBoard_test",
             "cd /usr/share/",
-            "chmod 777 ./eth_udpTest",
+            "chmod 777 ./OnBoard_test",
             "exit",
         ]
         ret_message += self.sendCommands(cmds)
@@ -275,31 +281,25 @@ class ShellCommands(object):
         return 0, ret_message
 
     def commands_3(self):
-        print("executing command4")
+        print("executing command3")
         ret_message = ''
         cmd = "adb push E:\\temp\eth_app\eth_app /data/userdata"
         ret_message = self.sendCommands(cmd)
 
+        cmds = [
+            "cp -f /data/userdata/eth_app /usr/share",
+            "rm -f /data/userdata/eth_app",
+            "cd /usr/share/",
+            "chmod 777 ./eth_app",
+            "exit",
+        ]
+        ret_message += self.sendCommands(cmds)
         return 0, ret_message
+
+
 
     def commands_4(self):
         print("executing command4")
-        ret_message = ''
-
-        cmds = [
-            "cp -f /data/userdata/eth_app /usr/share",
-            "cd /usr/share/",
-            "chmod 777 ./eth_app",
-            # "export LD_LIBRARY_PATH=/custapp/lib:${LD_LIBRARY_PATH}",
-            # "echo $LD_LIBRARY_PATH",
-            "exit",
-        ]
-
-        ret_message = self.sendCommands(cmds)
-        return 0, ret_message
-
-    def commands_5(self):
-        print("executing command5")
         ret_message = ''
 
         cmds = [
@@ -312,8 +312,8 @@ class ShellCommands(object):
 
         return 0, ret_message
 
-    def commands_6(self):
-        print("executing command6")
+    def commands_5(self):
+        print("executing command5")
         ret_message = ''
         cmd = "adb push E:\\temp\eth_app\pr_location_service /online"
         ret_message += self.sendCommands(cmd)
@@ -328,6 +328,29 @@ class ShellCommands(object):
             "exit",
         ]
         ret_message += self.sendCommands(cmds)
+
+        return 0, ret_message
+
+    def commands_6(self):
+        print("executing command6")
+        ret_message = ''
+        cmd = "adb push E:\\temp\eth_app\eth_udpTest /data/userdata"
+        ret_message += self.sendCommands(cmd)
+
+        cmds = [
+            "cp -f /data/userdata/eth_udpTest /usr/share",
+            "rm -f /data/userdata/eth_udpTest",
+            "cd /usr/share/",
+            "chmod 777 ./eth_udpTest",
+            "exit",
+        ]
+        ret_message += self.sendCommands(cmds)
+
+        return 0, ret_message
+
+    def commands_7(self):
+        print("executing command7")
+        ret_message = ''
 
         return 0, ret_message
 
